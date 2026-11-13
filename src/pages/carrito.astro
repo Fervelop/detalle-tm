@@ -1,0 +1,14 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import CartPage from '@/components/islands/CartPage';
+import { loadShell } from '@/lib/shell';
+
+const { settings, categories } = await loadShell(Astro.locals);
+Astro.response.headers.set('Cache-Control', 'no-store');
+---
+<Layout settings={settings} categories={categories} title="Tu pedido" page="carrito" noindex>
+  <div class="wrap">
+    <div class="page-head"><h1>Tu pedido</h1></div>
+    <CartPage client:load fields={settings.checkout.fields} cities={settings.checkout.cities} />
+  </div>
+</Layout>

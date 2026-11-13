@@ -1,0 +1,21 @@
+---
+// Páginas de texto editables desde el panel: /nosotros y /preguntas-frecuentes.
+import { eq } from 'drizzle-orm';
+import Layout from '@/layouts/Layout.astro';
+import { loadShell } from '@/lib/shell';
+import { schema } from '@/lib/db';
+
+const ALLOWED = ['nosotros', 'preguntas-frecuentes'];
+const slug = Astro.params.page ?? '';
+if (!ALLOWED.includes(slug)) return Astro.rewrite('/404');
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const [page] = await db.select().from(schema.pages).where(eq(schema.pages.slug, slug)).limit(1);
+if (!page) return Astro.rewrite('/404');
+---
+<Layout settings={settings} categories={categories} title={page.title} description={page.body.slice(0, 150)} page={slug}>
+  <div class="wrap">
+    <div class="page-head"><h1>{page.title}</h1></div>
+    <div class="prose">{page.body}</div>
+  </div>
+</Layout>

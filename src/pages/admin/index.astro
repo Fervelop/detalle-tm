@@ -1,0 +1,66 @@
+---
+// Panel admin (fase 4). Por ahora confirma que el acceso protegido funciona y muestra el resumen de cotizaciones.
+import { desc, sql } from 'drizzle-orm';
+import '@/styles/global.css';
+import { getDb, schema } from '@/lib/db';
+
+const db = getDb(Astro.locals);
+const [counts] = await db
+  .select({
+    products: sql<number>`(select count(*) from products where deleted_at is null)`,
+    newQuotes: sql<number>`(select count(*) from quotes where status = 'new')`,
+  })
+  .from(schema.settings)
+  .limit(1);
+const latest = await db.select().from(schema.quotes).orderBy(desc(schema.quotes.id)).limit(10);
+const parseName = (raw: string) => {
+  try { return JSON.parse(raw).name as string; } catch { return ''; }
+};
+---
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Panel admin | Detalle TM</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800&display=swap" />
+  </head>
+  <body style="background:#FFF8FA">
+    <main class="wrap" style="padding-top:32px; padding-bottom:48px">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px">
+        <img src="/logo.webp" alt="" width="48" height="48" style="border-radius:50%" />
+        <div>
+          <h1 style="font-size:30px">Panel admin</h1>
+          <p class="hint">Sesión: {Astro.locals.admin?.email}</p>
+        </div>
+      </div>
+      <div class="category-grid" style="margin-bottom:24px">
+        <div class="category-tile" style="--tone:#F7C5D5">{counts?.products ?? 0} productos</div>
+        <div class="category-tile" style="--tone:#F9DFA8">{counts?.newQuotes ?? 0} cotizaciones nuevas</div>
+      </div>
+      <h2 style="font-size:22px; margin-bottom:12px">Últimas cotizaciones</h2>
+      {latest.length ? (
+        <div style="overflow-x:auto; background:#fff; border-radius:20px; padding:8px 16px">
+          <table style="width:100%; border-collapse:collapse">
+            <thead><tr style="text-align:left; color:var(--c-muted)"><th style="padding:10px 6px">Código</th><th style="padding:10px 6px">Cliente</th><th style="padding:10px 6px">Fecha</th><th style="padding:10px 6px">Estado</th></tr></thead>
+            <tbody>
+              {latest.map((q) => (
+                <tr style="border-top:1px solid var(--c-line)">
+                  <td style="padding:10px 6px; font-weight:800">{q.code}</td>
+                  <td style="padding:10px 6px">{parseName(q.customer)}</td>
+                  <td style="padding:10px 6px">{q.createdAt.slice(0, 16).replace('T', ' ')}</td>
+                  <td style="padding:10px 6px">{{ new: 'Nueva', quoted: 'Cotizada', sold: 'Vendida', cancelled: 'Cancelada' }[q.status]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p class="empty">Aún no hay cotizaciones.</p>
+      )}
+      <p class="notice" style="margin-top:24px">La gestión de productos, fotos, categorías, apariencia y precios llega en la fase 4.</p>
+    </main>
+  </body>
+</html>

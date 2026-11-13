@@ -1,0 +1,25 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import ProductListing from '@/components/ProductListing.astro';
+import { loadShell } from '@/lib/shell';
+import { listOccasions, listProducts } from '@/lib/catalog';
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const query = (Astro.url.searchParams.get('q') ?? '').slice(0, 80).trim();
+const occasion = Astro.url.searchParams.get('ocasion') ?? undefined;
+const [occasions, products] = await Promise.all([
+  listOccasions(db),
+  listProducts(db, settings, { query: query || undefined, occasionSlug: occasion }),
+]);
+---
+<Layout settings={settings} categories={categories} title={query ? `Resultados para “${query}”` : 'Catálogo'} page="catalogo" noindex={!!query}>
+  <ProductListing
+    title={query ? 'Resultados de búsqueda' : 'Catálogo'}
+    intro="Todos nuestros detalles, decoraciones y arreglos. Agrégalos al carrito y cotízalos por WhatsApp."
+    products={products}
+    categories={categories}
+    occasions={occasions}
+    currentOccasion={occasion}
+    query={query}
+  />
+</Layout>

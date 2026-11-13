@@ -1,0 +1,71 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Gallery from '@/components/islands/Gallery';
+import AddToCart from '@/components/islands/AddToCart';
+import { loadShell } from '@/lib/shell';
+import { formatCop, getProduct } from '@/lib/catalog';
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const product = await getProduct(db, settings, Astro.params.slug ?? '');
+if (!product) return Astro.rewrite('/404');
+
+const tagLabels: Record<string, string> = { nuevo: 'Nuevo', 'mas-pedido': 'Más pedido', destacado: 'Destacado' };
+const badge = !product.available ? 'No disponible' : product.tags.map((t) => tagLabels[t]).find(Boolean) ?? null;
+const description = product.seoDescription || product.shortDescription || `${product.name} con entrega en ${settings.business.coverage}. Cotízalo por WhatsApp.`;
+const tone = (c: string | null) => (c || '').replace(/[^#a-zA-Z0-9]/g, '');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: product.name,
+  description,
+  image: product.images.map((i) => new URL(i.url, Astro.url).toString()),
+  category: product.categoryName ?? undefined,
+  brand: { '@type': 'Brand', name: settings.business.name },
+  ...(product.showPrice && product.price != null
+    ? { offers: { '@type': 'Offer', priceCurrency: 'COP', price: product.price, availability: product.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' } }
+    : {}),
+};
+---
+<Layout
+  settings={settings}
+  categories={categories}
+  title={product.seoTitle || product.name}
+  description={description}
+  image={product.image?.url}
+  page="producto"
+>
+  <script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+  <div class="wrap product-layout">
+    <div class="gallery-col"><Gallery client:load images={product.images} name={product.name} badge={badge} /></div>
+
+    <div class="product-info">
+      {product.categorySlug && <a class="cat" href={`/categoria/${product.categorySlug}`}>{product.categoryName}</a>}
+      <h1>{product.name}</h1>
+      {(product.description || product.shortDescription) && <p class="desc">{product.description || product.shortDescription}</p>}
+      <p class="price-big">{product.showPrice && product.price != null ? `Desde ${formatCop(product.price)}` : 'Precio a cotizar'}</p>
+
+      <AddToCart
+        client:load
+        productId={product.id}
+        slug={product.slug}
+        name={product.name}
+        imageUrl={product.image?.url ?? null}
+        basePrice={product.showPrice ? product.price : null}
+        available={product.available}
+        sizes={product.sizes}
+        colors={product.colors}
+        addons={product.addons}
+      />
+
+      {product.occasions.length > 0 && (
+        <div class="opt-group">
+          <span class="opt-label">Ideal para</span>
+          <div class="tag-links">
+            {product.occasions.map((o) => <a href={`/ocasion/${o.slug}`} style={`--tone:${tone(o.color) || 'var(--c-pink)'}`}>{o.name}</a>)}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

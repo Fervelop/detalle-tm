@@ -1,0 +1,23 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import ProductListing from '@/components/ProductListing.astro';
+import { loadShell } from '@/lib/shell';
+import { listOccasions, listProducts } from '@/lib/catalog';
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const occasions = await listOccasions(db);
+const occasion = occasions.find((o) => o.slug === Astro.params.slug);
+if (!occasion) return Astro.rewrite('/404');
+
+const products = await listProducts(db, settings, { occasionSlug: occasion.slug });
+---
+<Layout settings={settings} categories={categories} title={`Detalles para ${occasion.name.toLowerCase()}`} page="ocasion">
+  <ProductListing
+    title={occasion.name}
+    intro={`Ideas para ${occasion.name.toLowerCase()}. Agrégalas al carrito y cotízalas por WhatsApp.`}
+    products={products}
+    categories={categories}
+    occasions={occasions}
+    currentOccasion={occasion.slug}
+  />
+</Layout>

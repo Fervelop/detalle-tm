@@ -1,0 +1,3 @@
+# Copia este archivo como .dev.vars para desarrollo local (no se sube a GitHub).
+# Con esta variable, `npm run dev` te deja entrar a /admin sin Cloudflare Access.
+DEV_ADMIN_EMAIL=detallestm.shaddai@gmail.com

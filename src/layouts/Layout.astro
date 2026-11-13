@@ -1,0 +1,117 @@
+---
+import '@/styles/global.css';
+import Icon from '@/components/Icon.astro';
+import CartButton from '@/components/islands/CartButton';
+import { googleFontsHref, themeCss, type Settings } from '@/lib/settings';
+import { waLink } from '@/lib/quote';
+
+interface Props {
+  settings: Settings;
+  categories: { slug: string; name: string }[];
+  title?: string;
+  description?: string;
+  image?: string;
+  page?: string;
+  noindex?: boolean;
+}
+
+const { settings, categories, title, description, image, page = 'tienda', noindex = false } = Astro.props;
+const pageTitle = title ? `${title} | ${settings.business.name}` : settings.seo.title;
+const pageDescription = description || settings.seo.description;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const ogImage = new URL(image || '/og-logo.jpg', Astro.url).toString();
+const ga4 = /^G-[A-Z0-9]+$/.test(settings.analytics.ga4) ? settings.analytics.ga4 : '';
+const waGeneric = waLink(settings.whatsapp.number, settings.whatsapp.genericMessage);
+const q = Astro.url.searchParams.get('q') ?? '';
+---
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="es_CO" />
+    <meta name="theme-color" content={settings.theme.pink} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href={googleFontsHref(settings.theme)} />
+    <style is:inline set:html={`:root{${themeCss(settings.theme)}}`}></style>
+    <slot name="head" />
+    {ga4 && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4}`}></script>
+        <script is:inline define:vars={{ ga4 }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() { dataLayer.push(arguments); }
+          gtag('js', new Date());
+          gtag('config', ga4);
+        </script>
+      </>
+    )}
+  </head>
+  <body data-page={page}>
+    <a class="sr-only" href="#contenido">Saltar al contenido</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">
+          <img src="/logo.webp" alt="" width="48" height="48" />
+          <span>{settings.business.name}</span>
+        </a>
+        <nav class="main-nav" aria-label="Categorías">
+          {categories.map((c) => <a href={`/categoria/${c.slug}`}>{c.name}</a>)}
+          <a href="/nosotros">Nosotros</a>
+        </nav>
+        <div class="header-actions">
+          <form class="search-form" action="/catalogo" method="get" role="search">
+            <label>
+              <Icon name="search" size={18} />
+              <span class="sr-only">Buscar productos</span>
+              <input type="search" name="q" value={q} placeholder="Buscar productos" />
+            </label>
+          </form>
+          <a class="icon-btn mobile-only" href="/catalogo" aria-label="Buscar y ver el catálogo"><Icon name="search" size={20} /></a>
+          <CartButton client:load />
+        </div>
+      </div>
+    </header>
+
+    <main id="contenido">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <div style="flex: 1 1 260px">
+          <div class="name">{settings.business.name}</div>
+          <p>{settings.business.tagline.replaceAll('|', '·')}</p>
+          <p>Entregas en {settings.business.coverage}</p>
+        </div>
+        <nav aria-label="Páginas">
+          <a href="/catalogo">Catálogo</a>
+          <a href="/nosotros">Nosotros</a>
+          <a href="/preguntas-frecuentes">Preguntas frecuentes</a>
+          <a href="/galeria">Galería y testimonios</a>
+        </nav>
+        <nav aria-label="Contacto">
+          {settings.social.instagram && <a href={settings.social.instagram} rel="noopener" target="_blank">Instagram</a>}
+          {settings.social.facebook && <a href={settings.social.facebook} rel="noopener" target="_blank">Facebook</a>}
+          {settings.social.tiktok && <a href={settings.social.tiktok} rel="noopener" target="_blank">TikTok</a>}
+          <a href={waGeneric} rel="noopener" target="_blank">WhatsApp {settings.whatsapp.number.replace(/^57/, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}</a>
+        </nav>
+      </div>
+    </footer>
+
+    <a class="wa-float" href={waGeneric} target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+      <Icon name="whatsapp" size={28} />
+    </a>
+  </body>
+</html>

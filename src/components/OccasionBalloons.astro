@@ -1,0 +1,21 @@
+---
+interface Props {
+  occasions: { slug: string; name: string; color: string | null }[];
+  current?: string;
+}
+const { occasions, current } = Astro.props;
+---
+<div class="occasion-row">
+  {occasions.map((o) => (
+    <a
+      class="balloon-link"
+      href={`/ocasion/${o.slug}`}
+      aria-current={o.slug === current ? 'page' : undefined}
+      style={`--tone:${(o.color || '').replace(/[^#a-zA-Z0-9]/g, '') || 'var(--c-pink)'}`}
+    >
+      <span class="shape">{o.name}</span>
+      <span class="knot" aria-hidden="true"></span>
+      <span class="string" aria-hidden="true"></span>
+    </a>
+  ))}
+</div>

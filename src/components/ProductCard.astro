@@ -1,0 +1,40 @@
+---
+import QuickAdd from '@/components/islands/QuickAdd';
+import { formatCop, type ProductCard } from '@/lib/catalog';
+
+interface Props { product: ProductCard; eager?: boolean }
+const { product: p, eager = false } = Astro.props;
+
+const tagLabels: Record<string, string> = { nuevo: 'Nuevo', 'mas-pedido': 'Más pedido', destacado: 'Destacado' };
+const badge = !p.available ? 'No disponible' : p.tags.map((t) => tagLabels[t]).find(Boolean);
+---
+<article class="product-card">
+  <a class="frame" href={`/producto/${p.slug}`} tabindex="-1" aria-hidden="true">
+    {badge && <span class:list={['badge', { 'badge-off': !p.available }]}>{badge}</span>}
+    {p.image ? (
+      <img
+        src={p.image.url}
+        alt=""
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        style={`object-position:${p.image.focusX * 100}% ${p.image.focusY * 100}%`}
+      />
+    ) : (
+      <span class="placeholder">{p.name}</span>
+    )}
+  </a>
+  <h3><a href={`/producto/${p.slug}`}>{p.name}</a></h3>
+  <div class="row">
+    {p.showPrice && p.price != null ? <span class="price">{formatCop(p.price)}</span> : <span class="price-muted">A cotizar</span>}
+    <QuickAdd
+      client:visible
+      productId={p.id}
+      slug={p.slug}
+      name={p.name}
+      imageUrl={p.image?.url ?? null}
+      unitPrice={p.showPrice ? p.price : null}
+      hasOptions={p.hasOptions}
+      available={p.available}
+    />
+  </div>
+</article>

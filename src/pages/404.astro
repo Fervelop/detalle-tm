@@ -1,0 +1,17 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { loadShell } from '@/lib/shell';
+
+const { settings, categories } = await loadShell(Astro.locals);
+Astro.response.status = 404;
+---
+<Layout settings={settings} categories={categories} title="Página no encontrada" page="404" noindex>
+  <div class="wrap">
+    <div class="done">
+      <h1>Esta página no existe</h1>
+      <p>Puede que el producto ya no esté disponible o que el enlace tenga un error.</p>
+      <a class="btn btn-primary btn-block" href="/catalogo">Ver catálogo</a>
+      <a class="btn btn-soft btn-block" href="/">Ir al inicio</a>
+    </div>
+  </div>
+</Layout>

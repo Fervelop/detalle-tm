@@ -1,0 +1,29 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import ProductListing from '@/components/ProductListing.astro';
+import { loadShell } from '@/lib/shell';
+import { listOccasions, listProducts } from '@/lib/catalog';
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const category = categories.find((c) => c.slug === Astro.params.slug);
+if (!category) return Astro.rewrite('/404');
+
+const query = (Astro.url.searchParams.get('q') ?? '').slice(0, 80).trim();
+const occasion = Astro.url.searchParams.get('ocasion') ?? undefined;
+const [occasions, products] = await Promise.all([
+  listOccasions(db),
+  listProducts(db, settings, { categorySlug: category.slug, occasionSlug: occasion, query: query || undefined }),
+]);
+---
+<Layout settings={settings} categories={categories} title={category.name} description={category.description ?? undefined} page="categoria">
+  <ProductListing
+    title={category.name}
+    intro={category.description}
+    products={products}
+    categories={categories}
+    occasions={occasions}
+    currentCategory={category.slug}
+    currentOccasion={occasion}
+    query={query}
+  />
+</Layout>

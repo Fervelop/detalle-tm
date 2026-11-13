@@ -1,0 +1,82 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import ProductCard from '@/components/ProductCard.astro';
+import OccasionBalloons from '@/components/OccasionBalloons.astro';
+import { loadShell } from '@/lib/shell';
+import { listOccasions, listProducts } from '@/lib/catalog';
+import { waLink } from '@/lib/quote';
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const [occasions, featured] = await Promise.all([listOccasions(db), listProducts(db, settings, { featured: true, limit: 8 })]);
+const products = featured.length ? featured : await listProducts(db, settings, { limit: 8 });
+const heroImages = products.filter((p) => p.image).slice(0, 3).map((p) => p.image!);
+const tone = (c: string | null) => (c || '').replace(/[^#a-zA-Z0-9]/g, '');
+---
+<Layout settings={settings} categories={categories} page="inicio">
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-text">
+        <h1>Celebra con flores, globos y desayunos sorpresa</h1>
+        <p>Decoramos y entregamos en {settings.business.coverage}. Arma tu pedido y lo cotizamos por WhatsApp.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/catalogo">Ver catálogo</a>
+          <a class="btn btn-light" href={waLink(settings.whatsapp.number, settings.whatsapp.genericMessage)} target="_blank" rel="noopener">Escribir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="balloons" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <div class:list={['b', `b${i + 1}`]}>
+            {heroImages[i] && <img src={heroImages[i].url} alt="" loading={i === 0 ? 'eager' : 'lazy'} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {occasions.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><h2>¿Qué celebramos?</h2></div>
+        <OccasionBalloons occasions={occasions} />
+      </div>
+    </section>
+  )}
+
+  <section class="section" style="padding-top: 0">
+    <div class="wrap">
+      <div class="section-head"><h2>Categorías</h2></div>
+      <div class="category-grid">
+        {categories.map((c) => (
+          <a class="category-tile" href={`/categoria/${c.slug}`} style={`--tone:${tone(c.color) || 'var(--c-pink-light)'}`}>{c.name}</a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {products.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Lo más pedido</h2>
+          <a href="/catalogo">Ver todo el catálogo</a>
+        </div>
+        <div class="product-grid">
+          {products.map((p, i) => <ProductCard product={p} eager={i < 2} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section">
+    <div class="wrap">
+      <div class="steps">
+        <h2>Pedir es así de fácil</h2>
+        <ol>
+          <li><span class="num">1</span>Agrega al carrito lo que te guste.</li>
+          <li><span class="num">2</span>Escribe a dónde lo llevamos en {settings.business.coverage}.</li>
+          <li><span class="num">3</span>Envía tu pedido por WhatsApp y te respondemos con el precio.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</Layout>

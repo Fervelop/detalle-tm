@@ -1,0 +1,25 @@
+# Configuración de Cloudflare Pages para Detalle TM.
+# Los IDs marcados con REEMPLAZAR se obtienen al crear los recursos (ver README).
+name = "detalle-tm"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "detalle-tm"
+database_id = "REEMPLAZAR-con-el-id-de-d1"
+migrations_dir = "db/migrations"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "detalle-tm-imagenes"
+
+[vars]
+# Dominio del equipo de Cloudflare Zero Trust, p. ej. https://detalletm.cloudflareaccess.com
+ACCESS_TEAM_DOMAIN = "REEMPLAZAR"
+# "Application Audience (AUD) Tag" de la aplicación de Access que protege /admin
+ACCESS_AUD = "REEMPLAZAR"
+# Correos autorizados para el panel, separados por comas.
+# Agrega aquí también el correo principal de la cuenta de GitHub Fervelop.
+ADMIN_EMAILS = "detallestm.shaddai@gmail.com"

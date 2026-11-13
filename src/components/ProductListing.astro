@@ -1,0 +1,70 @@
+---
+import ProductCard from '@/components/ProductCard.astro';
+import OccasionBalloons from '@/components/OccasionBalloons.astro';
+import type { ProductCard as Card } from '@/lib/catalog';
+
+interface Props {
+  title: string;
+  intro?: string | null;
+  products: Card[];
+  categories: { slug: string; name: string }[];
+  occasions: { slug: string; name: string; color: string | null }[];
+  currentCategory?: string;
+  currentOccasion?: string;
+  query?: string;
+}
+const { title, intro, products, categories, occasions, currentCategory, currentOccasion, query } = Astro.props;
+
+/** Los chips de categoría conservan la ocasión y la búsqueda elegidas. */
+const catHref = (slug?: string) => {
+  const params = new URLSearchParams();
+  if (currentOccasion) params.set('ocasion', currentOccasion);
+  if (query) params.set('q', query);
+  const qs = params.toString();
+  return (slug ? `/categoria/${slug}` : '/catalogo') + (qs ? `?${qs}` : '');
+};
+---
+<div class="wrap">
+  <div class="page-head">
+    <h1>{title}</h1>
+    {intro && <p>{intro}</p>}
+  </div>
+
+  <form action="/catalogo" method="get" role="search" style="margin: 12px 0 4px">
+    <label class="sr-only" for="q-list">Buscar productos</label>
+    <div style="display:flex; gap:8px">
+      <input id="q-list" class="input" type="search" name="q" value={query ?? ''} placeholder="Busca desayunos, rosas, globos…" />
+      <button class="btn btn-dark" type="submit" style="min-height:50px">Buscar</button>
+    </div>
+  </form>
+
+  <nav class="chips" aria-label="Filtrar por categoría">
+    <a class="chip" href={catHref()} aria-current={!currentCategory ? 'page' : undefined}>Todo</a>
+    {categories.map((c) => (
+      <a class="chip" href={catHref(c.slug)} aria-current={c.slug === currentCategory ? 'page' : undefined}>{c.name}</a>
+    ))}
+  </nav>
+
+  {occasions.length > 0 && (
+    <details style="margin: 4px 0 16px" open={!!currentOccasion}>
+      <summary style="cursor:pointer; font-weight:800; min-height:44px; display:flex; align-items:center">Filtrar por ocasión</summary>
+      <div style="padding-top: 12px"><OccasionBalloons occasions={occasions} current={currentOccasion} /></div>
+    </details>
+  )}
+
+  <p class="hint" style="margin: 8px 0 14px" aria-live="polite">
+    {products.length} {products.length === 1 ? 'producto' : 'productos'}{query ? ` para “${query}”` : ''}
+  </p>
+
+  {products.length > 0 ? (
+    <div class="product-grid">
+      {products.map((p, i) => <ProductCard product={p} eager={i < 2} />)}
+    </div>
+  ) : (
+    <div class="empty">
+      <h2 style="font-size: 24px">No encontramos productos</h2>
+      <p>Prueba con otra palabra o escríbenos por WhatsApp: armamos detalles a la medida.</p>
+      <a class="btn btn-primary" href="/catalogo">Ver todo el catálogo</a>
+    </div>
+  )}
+</div>

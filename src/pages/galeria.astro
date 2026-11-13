@@ -1,0 +1,37 @@
+---
+import { asc, eq } from 'drizzle-orm';
+import Layout from '@/layouts/Layout.astro';
+import { loadShell } from '@/lib/shell';
+import { schema } from '@/lib/db';
+import { imageUrl } from '@/lib/catalog';
+
+const { db, settings, categories } = await loadShell(Astro.locals);
+const items = await db.select().from(schema.testimonials).where(eq(schema.testimonials.visible, true)).orderBy(asc(schema.testimonials.sortOrder));
+---
+<Layout settings={settings} categories={categories} title="Galería y testimonios" page="galeria">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Galería y testimonios</h1>
+      <p>Momentos reales que ayudamos a celebrar.</p>
+    </div>
+    {items.length ? (
+      <div class="product-grid" style="padding-bottom: 32px">
+        {items.map((t) => (
+          <figure class="product-card" style="margin:0">
+            <span class="frame">
+              {t.imageKey ? <img src={imageUrl(t.imageKey)} alt="" loading="lazy" /> : <span class="placeholder">“”</span>}
+            </span>
+            <blockquote style="margin:0">{t.text}</blockquote>
+            <figcaption style="font-weight:800">{t.author}</figcaption>
+          </figure>
+        ))}
+      </div>
+    ) : (
+      <div class="empty" style="margin-bottom: 32px">
+        <h2 style="font-size:24px">Muy pronto</h2>
+        <p>Estamos reuniendo fotos y opiniones de nuestros clientes.</p>
+        <a class="btn btn-primary" href="/catalogo">Ver catálogo</a>
+      </div>
+    )}
+  </div>
+</Layout>
